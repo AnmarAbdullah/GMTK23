@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.AI;
 
 public class IdleWander : State
 {
@@ -9,6 +10,7 @@ public class IdleWander : State
     private bool _wandering;
     [HideInInspector] public bool _isAlerted;
     private Vector2 _randomPosition;
+    private NavMeshAgent navmesh;
     
     [Header("Wander Settings")]
     public float _wanderCoolDown;
@@ -17,22 +19,29 @@ public class IdleWander : State
 
     public State _alert;
 
+    void Start()
+    {
+        navmesh = GetComponent<NavMeshAgent>();
+        navmesh.updateRotation = false;
+        navmesh.updateUpAxis = false;
+    }
+
     public override State RunCurrentState()
     {
         dist = Vector2.Distance(transform.position, _randomPosition);
 
         if (!_wandering) _timer += Time.deltaTime;
         
-        if (_timer > _wanderCoolDown && !_wandering)
+        if (_timer > _wanderCoolDown)
         {
             _randomPosition = SetWanderPosition();
             _timer= 0;
-           // _wandering = true;
         }
 
         if (_wandering)
         {
-            transform.position = Vector2.MoveTowards(transform.position, _randomPosition, _walkSpeed * Time.deltaTime);
+            //transform.position = Vector2.MoveTowards(transform.position, _randomPosition, _walkSpeed * Time.deltaTime);
+            navmesh.SetDestination(_randomPosition);
             if (dist < 0.01f) { _wandering = false; _randomPosition = Vector2.zero; }
         }
         Debug.Log(_isAlerted);

@@ -8,6 +8,7 @@ public class Attack : State
 
     public override State RunCurrentState()
     {
-        throw new System.NotImplementedException();
+        // instantiate shit...
+        return this;
     }
 }

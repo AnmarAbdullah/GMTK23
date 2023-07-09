@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.AI;
 
 public class StateManager : MonoBehaviour
 {
@@ -7,17 +8,22 @@ public class StateManager : MonoBehaviour
     [Header("Field Of View Settings")]
     [SerializeField] private float DetectionRadius;
     [SerializeField] private float DetectionAngle;
-    private PlayerAlert _player;
+    private PlayerMovement _player;
 
-    enum NPCType
+    [SerializeField] private State _alertState;
+    [SerializeField] private State _panicState;
+
+    public enum NPCType
     {
         Pacifist,
         Aggressive
     }
 
+    public NPCType _Type;
+
     void Start()
     {
-        _player = FindObjectOfType<PlayerAlert>();
+        _player = FindObjectOfType<PlayerMovement>();
     }
 
     void Update()
@@ -27,6 +33,8 @@ public class StateManager : MonoBehaviour
         if (_nextState != null) SwitchToNextState(_nextState);
 
         FieldOfView();
+
+        Debug.Log(_currentState);
     }
 
     void SwitchToNextState(State nextState)
@@ -46,7 +54,14 @@ public class StateManager : MonoBehaviour
             {
                 if (r.collider.CompareTag("Player"))
                 {
-                    Debug.Log("Gay Detected");
+                    if(_Type == NPCType.Pacifist)
+                    {
+                        _currentState = _panicState;
+                    }
+                    if (_Type == NPCType.Aggressive)
+                    {
+                        _currentState = _alertState;
+                    }
                 }
             }
         }

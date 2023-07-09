@@ -1,6 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using UnityEditor.Build;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class PlayerMovement : MonoBehaviour
 {
@@ -12,26 +14,74 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] float walkAcceleration = 5;
     [SerializeField] float groundDeceleration = 2;
 
+
+    [SerializeField] private Transform myTransform;
+    //[SerializeField] private Transform Tyler;
+
+    PlayerInput pInput;
+
+    Vector2 movementInput = Vector2.zero;
+
+
+
     // Start is called before the first frame update
-    void Start()
+    void Awake()
     {
-        collider2D = transform.GetComponent<BoxCollider2D>();
-        spriteRenderer = transform.GetComponent<SpriteRenderer>();
-        animator = transform.GetComponent<Animator>();
+        //collider2D = transform.GetComponent<BoxCollider2D>();
+        //spriteRenderer = transform.GetComponent<SpriteRenderer>();
+        //animator = transform.GetComponent<Animator>();
+        pInput = new PlayerInput();
     }
 
-    // Update is called once per frame
+    void OnEnable()
+    {
+        pInput.Enable();
+        pInput.Player.Movement.performed += OnMove;
+        pInput.Player.Movement.canceled += OnMoveCancel;
+    }
+
+    void OnDisable()
+    {
+        pInput.Disable();
+        pInput.Player.Movement.performed -= OnMove;
+        pInput.Player.Movement.canceled -= OnMoveCancel;
+    }
+
+    public void OnMove(InputAction.CallbackContext context)
+    {
+        movementInput = context.ReadValue<Vector2>();
+    }
+    public void OnMoveCancel(InputAction.CallbackContext context)
+    {
+        movementInput = Vector2.zero;
+    }
+
     void Update()
     {
-        float moveInput = Input.GetAxisRaw("Horizontal");
-        float moveInputVertical = Input.GetAxisRaw("Vertical");
-
-        if (moveInput != 0)
+        string[] ee = Input.GetJoystickNames();
+        for (int i = 0; i < ee.Length; i++)
         {
-            Debug.Log(moveInput);
-            velocity.x = Mathf.MoveTowards(velocity.x, speed * moveInput, walkAcceleration * Time.deltaTime);
+            print(ee[i]);  
+        }
+
+        Movement(myTransform);
+    }
+
+    void Movement(Transform player)
+    {
+        //float moveInput = Input.GetAxisRaw(horizontal);
+        //float moveInputVertical = Input.GetAxisRaw(vertical);
+
+        Animator animator = player.GetComponent<Animator>();
+        var collider2D = player.GetComponent<BoxCollider2D>();
+        var spriteRenderer = player.GetComponent<SpriteRenderer>();
+
+        if (movementInput.x != 0)
+        {
+            //Debug.Log(moveInput);
+            velocity.x = Mathf.MoveTowards(velocity.x, speed * movementInput.x, walkAcceleration * Time.deltaTime);
             animator.SetBool("IsWalkingH", true);
-            if (moveInput > 0)
+            if (movementInput.x > 0)
             {
                 spriteRenderer.flipX = true;
             }
@@ -48,11 +98,11 @@ public class PlayerMovement : MonoBehaviour
         }
 
 
-        if (moveInputVertical != 0)
+        if (movementInput.y != 0)
         {
-            velocity.y = Mathf.MoveTowards(velocity.y, speed * moveInputVertical, walkAcceleration * Time.deltaTime);
+            velocity.y = Mathf.MoveTowards(velocity.y, speed * movementInput.y, walkAcceleration * Time.deltaTime);
 
-            if(moveInputVertical > 0)
+            if (movementInput.y > 0)
             {
                 animator.SetBool("IsWalkingV", true);
             }
@@ -63,9 +113,9 @@ public class PlayerMovement : MonoBehaviour
             animator.SetBool("IsWalkingV", false);
         }
 
-        transform.Translate(velocity * Time.deltaTime);
+        player.Translate(velocity * Time.deltaTime);
 
-        Collider2D[] hits = Physics2D.OverlapBoxAll(transform.position, collider2D.size, 0);
+        Collider2D[] hits = Physics2D.OverlapBoxAll(player.position, collider2D.size, 0);
 
         foreach (Collider2D hit in hits)
         {
@@ -76,7 +126,7 @@ public class PlayerMovement : MonoBehaviour
 
             if (colliderDistance.isOverlapped)
             {
-                transform.Translate(colliderDistance.pointA - colliderDistance.pointB);
+                player.Translate(colliderDistance.pointA - colliderDistance.pointB);
             }
         }
     }
